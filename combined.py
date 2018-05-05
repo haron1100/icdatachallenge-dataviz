@@ -4,6 +4,7 @@ import json
 import ast
 import re
 import requests
+from bs4 import BeautifulSoup
 from PIL import Image
 import urllib.request
 from opentargets import OpenTargetsClient
@@ -76,7 +77,7 @@ def generateDiseaseJSON(target):
 	diseaseCounts = []
 	diseases, diseaseCounts = findDiseases(target)
 
-	json_data = '{diseases:{'
+	json_data = '{'
 	for i in range(0,5):
 		json_data = json_data + '"' + diseases[i] + '"'+ ':' + '"' + str(diseaseCounts[i]) + '"' + ','
 	json_data = json_data[:-1]
@@ -122,6 +123,25 @@ def image(CHEMBLID):
     return img
 
 
+def getName(target_id):
+
+    url = 'https://www.ebi.ac.uk/chembl/target/inspect/'+target_id
+
+    response = requests.get(url)
+    content = str(response.content)
+
+    soup = BeautifulSoup(content, 'lxml')
+
+    out = soup.find_all('table', {'class':'contenttable_lmenu'})
+
+    namesoup = BeautifulSoup(str(out[1]), 'lxml')
+
+    nameout = namesoup.find_all('td')
+    name = nameout[3].contents[0].strip('\\n ')
+    # print(type(name))
+    # print(name)
+    return name
+
 ##### Main #####
 
 #####################
@@ -166,9 +186,13 @@ drug_info_dict.update({"ActionType":actionType})
 drug_info_dict.update({"TargetChemblID":targetChemblid})
 drug_info_dict.update({"TargetPaperURL":paperURL})
 
+target = getName(targetChemblid)
+
 ot = OpenTargetsClient()
-target = 'BRAF'
 similarDiseasesJSON = generateDiseaseJSON(target)
+
+drug_info_dict.update({"Target":target})
+drug_info_dict.update({"SimilarDiseases":similarDiseasesJSON})
 
 #####################
 #   Write image     #
