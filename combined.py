@@ -4,7 +4,8 @@ import json
 import ast
 import re
 import requests
-
+from PIL import Image
+import urllib.request
 from opentargets import OpenTargetsClient
 
 
@@ -108,6 +109,18 @@ def mechansim(CHEMBLID):
 	return actionType,targetChemblid,paperURL
 
 
+def image(CHEMBLID):
+    param = CHEMBLID
+    URL = 'https://www.ebi.ac.uk/chembl/api/data/image/CHEMBL'+param
+
+    with urllib.request.urlopen(URL) as url:
+        with open('temp.jpg', 'wb') as f:
+            f.write(url.read())
+
+    img = Image.open('temp.jpg')
+
+    return img
+
 
 ##### Main #####
 
@@ -158,6 +171,12 @@ target = 'BRAF'
 similarDiseasesJSON = generateDiseaseJSON(target)
 
 #####################
+#   Write image     #
+#####################
+
+img = image(CHEMBLID)
+
+#####################
 #  Write to JSON    #
 #####################
 
@@ -165,6 +184,6 @@ with open('data.json', 'w') as outfile:
     # j = json.dumps(drug_info_dict)
     # j_data = 'data='+j
     # json.dump(j_data, outfile)
-    outfile.write('data=\"')
+    outfile.write("data=\'")
     json.dump(drug_info_dict, outfile)
-    outfile.write('\"')
+    outfile.write("\'")
