@@ -157,6 +157,6 @@ with open('data.json', 'w') as outfile:
     # j = json.dumps(drug_info_dict)
     # j_data = 'data='+j
     # json.dump(j_data, outfile)
-    outfile.write('data=\"')
+    outfile.write("data='")
     json.dump(drug_info_dict, outfile)
-    outfile.write('\"')
+    outfile.write("'")

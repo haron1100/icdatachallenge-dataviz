@@ -63,4 +63,6 @@ for facet in facets:
 # Write to JSON
 #j = json.dumps(drug_info_dict)
 with open('data.json', 'w') as outfile:
+    outfile.write('data = ')
     json.dump(drug_info_dict, outfile)
+
