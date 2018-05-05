@@ -86,17 +86,27 @@ def generateDiseaseJSON(target):
 
 def mechansim(CHEMBLID):
 	parameters =  CHEMBLID
-	base = 'https://www.ebi.ac.uk/chembl/api/data/mechanism/'+parameters
+	base = 'https://www.ebi.ac.uk/chembl/api/data/mechanism/' + parameters
 	response = requests.get(url = base)
 
 	#a = tree.getroot()
-	#print(type(response.content))
+	#print(response.content)
 	text = str(response.content)
 	#print(type(text))
 	pos = text.find('<mechanism_of_action>')
 	pos1 = text.find('</mechanism_of_action>')
+
+	pos3 = text.find('<target_chembl_id>')
+	pos4 = text.find('</target_chembl_id>')
+
+	pos5 = text.find('<ref_url>')
+	pos6 = text.find('</ref_url>')
+
 	actionType = text[pos+21:pos1]
-	return actionType
+	targetChemblid = text[pos3+18:pos4]
+	paperURL = text[pos5+9:pos6]
+	return actionType,targetChemblid,paperURL
+
 
 
 ##### Main #####
@@ -118,36 +128,34 @@ query_info = matrixQuery(ID_info_dict['type'], ID_info_dict['id'])
 query_info_dict = ast.literal_eval(query_info)
 
 drug_info_dict["diseases"] = {}
+drug_info_dict["diseases_paper_refs"] = {}
 facets = query_info_dict["facets"]
 
 # Add all diseases and counts to dict
 for facet in facets:
+
+    # Add disease data
     label = facet["label"].split('$')
     key = str(label[-1])
     value = int(facet["count"])
     drug_info_dict["diseases"].update({key:value})
 
-#####################
-#   Get Targets     #
-#####################
-
-
-
-#####################
-#  Similar Diseases #
-#####################
-
-ot = OpenTargetsClient()
-target = 'BRAF'
-similarDiseasesJSON = generateDiseaseJSON(target)
+    drug_info_dict["diseases_paper_refs"].update({key:facet["uids"]})
 
 #####################
 #   Get Action Type #
 #####################
 
 CHEMBLID = drug_info_dict["id"].replace('CHEMBL','')
-actionType =  mechansim(CHEMBLID)
+actionType, targetChemblid, paperURL =  mechansim(CHEMBLID)
+
 drug_info_dict.update({"ActionType":actionType})
+drug_info_dict.update({"TargetChemblID":targetChemblid})
+drug_info_dict.update({"TargetPaperURL":paperURL})
+
+ot = OpenTargetsClient()
+target = 'BRAF'
+similarDiseasesJSON = generateDiseaseJSON(target)
 
 #####################
 #  Write to JSON    #
@@ -157,6 +165,6 @@ with open('data.json', 'w') as outfile:
     # j = json.dumps(drug_info_dict)
     # j_data = 'data='+j
     # json.dump(j_data, outfile)
-    outfile.write("data='")
+    outfile.write('data=\"')
     json.dump(drug_info_dict, outfile)
-    outfile.write("'")
+    outfile.write('\"')
